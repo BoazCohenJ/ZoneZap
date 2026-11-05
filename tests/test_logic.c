@@ -139,6 +139,23 @@ static void test_parse_zone(void)
     CHECK(strlen(z.host_url) == sizeof z.host_url - 1);
 }
 
+static void test_zone_should_replace(void)
+{
+    const char *full = ZONE;
+    const char *bare = "[ZoneTransfer]\r\nZoneId=3\r\n";
+    const char *other = "[ZoneTransfer]\r\nZoneId=3\r\nHostUrl=https://other.example/b.zip\r\n";
+    const char *ref = "[ZoneTransfer]\r\nZoneId=3\r\nReferrerUrl=https://ex.org/\r\n";
+    /* Explorer's bare re-mark must not wipe the URL */
+    CHECK(!zz_zone_should_replace(full, strlen(full), bare, strlen(bare)));
+    CHECK(!zz_zone_should_replace(ref, strlen(ref), bare, strlen(bare)));
+    /* anything with a URL replaces */
+    CHECK(zz_zone_should_replace(full, strlen(full), other, strlen(other)));
+    CHECK(zz_zone_should_replace(bare, strlen(bare), full, strlen(full)));
+    /* bare over bare, or over garbage: replace */
+    CHECK(zz_zone_should_replace(bare, strlen(bare), bare, strlen(bare)));
+    CHECK(zz_zone_should_replace("junk", 4, bare, strlen(bare)));
+}
+
 static void test_xattr_name(void)
 {
     char n[64];
@@ -218,6 +235,7 @@ int main(void)
     test_judge();
     test_looks_like_zone();
     test_parse_zone();
+    test_zone_should_replace();
     test_xattr_name();
     test_wslconf();
     test_fs();

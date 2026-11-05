@@ -54,6 +54,12 @@ void zz_parse_zone(const char *buf, size_t len, zz_zone_info *out);
 /* "Local machine", "Intranet", "Trusted", "Internet", "Restricted" or "Unknown". */
 const char *zz_zone_name(int zone_id);
 
+/* Should a newly seen stream body replace the one already saved in the xattr?
+ * No when the old one has a HostUrl or ReferrerUrl and the new one has neither
+ * (Explorer re-marks copies with a bare "ZoneId=3" right after copying the full
+ * stream). Yes in every other case, e.g. a new download from another URL. */
+int zz_zone_should_replace(const char *old_buf, size_t old_len, const char *new_buf, size_t new_len);
+
 /* Name of the extended attribute that keeps a stream's content: user.windows.<stream>. */
 int zz_xattr_name(const char *stream, char *out, size_t out_size);
 

@@ -163,6 +163,16 @@ const char *zz_zone_name(int zone_id)
     return "Unknown";
 }
 
+int zz_zone_should_replace(const char *old_buf, size_t old_len, const char *new_buf, size_t new_len)
+{
+    zz_zone_info o, n;
+    zz_parse_zone(old_buf, old_len, &o);
+    zz_parse_zone(new_buf, new_len, &n);
+    int old_has_url = o.host_url[0] || o.referrer_url[0];
+    int new_has_url = n.host_url[0] || n.referrer_url[0];
+    return !(old_has_url && !new_has_url);
+}
+
 int zz_xattr_name(const char *stream, char *out, size_t out_size)
 {
     int n = snprintf(out, out_size, "user.windows.%s", stream);

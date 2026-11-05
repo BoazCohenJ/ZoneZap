@@ -107,6 +107,7 @@ It waits for the close, rather than deleting on create, so the Windows copy neve
 Windows 11 with WSL 2.7.13 and kernel 6.18.33, on Alpine 3.24 (no systemd, `wsl.conf` boot command, busybox `wget`) and Ubuntu 24.04 (systemd service, `curl`), both installed through `install.sh`:
 
 - `Copy-Item`, `cmd copy` and `robocopy` into the distro: every `:Zone.Identifier` removed about 1 ms after the copy finished, the copy reporting success, and the zone info kept as an xattr;
+- Explorer's own copy engine (the Shell `CopyHere` path, as used by paste and drag and drop) into both distros: no error dialogs, no leftovers, and the original URL kept. Explorer writes the stream up to three times per file (61 zero bytes first, then the real block, then a bare `ZoneId=3` re-mark); ZoneZap leaves the zero-filled stage alone and doesn't let the bare re-mark overwrite the fuller info it already saved;
 - 2,000 files in 20 folders copied with `robocopy` and again with `Copy-Item`: all 4,000 files arrived intact, 0 leftovers;
 - autostart after `wsl --terminate` and after WSL shut an idle distro down;
 - the safety rules: look-alike files with other content, directories and symlinks named `*:Zone.Identifier` were all kept;
@@ -120,6 +121,8 @@ Not tested yet: Debian, Fedora and openSUSE distros, arm64 hardware (the arm64 b
 **Is it safe to delete these files?** Yes. They're copies of a Windows-only marker. Nothing on Linux reads them, and the original stream is still on the Windows copy of the file (if it still exists). ZoneZap keeps the content as an xattr anyway.
 
 **Does it slow anything down?** It reads the fanotify queue and compares file names; there are no per-folder watches and no polling of the disk. While idle it uses no CPU and under 200 KB of memory. During an 8.5-second `robocopy` of 2,000 marked files it used 0.27 s of CPU in total (about 3% of one core), most of it on the 2,000 removals.
+
+**I copied with Explorer and the log shows two removals per file.** That's expected: Explorer writes the stream, then re-marks the copy a moment later, so ZoneZap removes it twice. The zone info with the URL is kept.
 
 **WSL 1?** No: WSL 1 has no fanotify. **Docker Desktop's distro?** It's managed by Docker; files copied into containers through it aren't covered.
 

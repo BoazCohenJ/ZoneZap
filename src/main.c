@@ -278,7 +278,15 @@ static int zap_entry(int dirfd, const char *name)
     zz_verdict v = zz_judge(name, S_ISREG(st.st_mode), (long long)st.st_size, head,
                             (size_t)head_len, &opt.streams);
     if (v != ZZ_ZAP) {
-        VLOG("%s/%s: %s", dpath, name, zz_verdict_text(v));
+        if (opt.verbose && v == ZZ_KEEP_CONTENT) {
+            char hex[3 * 24 + 1] = "";
+            for (ssize_t i = 0; i < head_len && i < 24; i++)
+                snprintf(hex + 3 * i, 4, "%02x ", (unsigned char)head[i]);
+            VLOG("%s/%s: %s (%lld bytes: %s)", dpath, name, zz_verdict_text(v),
+                 (long long)st.st_size, hex);
+        } else {
+            VLOG("%s/%s: %s", dpath, name, zz_verdict_text(v));
+        }
         return 0;
     }
     if (opt.dry_run) {
@@ -300,10 +308,18 @@ static int zap_entry(int dirfd, const char *name)
                     char xname[ZZ_MAX_STREAM_NAME + 32];
                     zz_xattr_name(opt.streams.names[idx], xname, sizeof xname);
                     size_t xl = (size_t)head_len > 4000 ? 4000 : (size_t)head_len;
-                    if (fsetxattr(bfd, xname, head, xl, 0) == 0)
+                    /* Explorer writes the stream again with less in it (just ZoneId);
+                     * don't let that replace a fuller copy kept a moment earlier */
+                    char old[4096];
+                    ssize_t ol = fgetxattr(bfd, xname, old, sizeof old);
+                    if (ol > 0 && !zz_zone_should_replace(old, (size_t)ol, head, xl)) {
                         saved = 1;
-                    else
+                        VLOG("%s/%s: kept the fuller zone info already saved", dpath, base);
+                    } else if (fsetxattr(bfd, xname, head, xl, 0) == 0) {
+                        saved = 1;
+                    } else {
                         VLOG("%s/%s: could not save xattr: %s", dpath, base, strerror(errno));
+                    }
                     close(bfd);
                 }
             }
