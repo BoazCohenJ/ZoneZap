@@ -1159,8 +1159,16 @@ static int cmd_self_test(void)
     const char *ps = find_powershell();
     char winpath[PATH_MAX];
     char *wslpath[] = {"wslpath", "-w", dir, NULL};
+    /* WSL registers Windows .exe files with binfmt_misc. Some systemd setups wipe
+     * that registration (it is shared by every distro), so check it first. */
+    int interop = access("/proc/sys/fs/binfmt_misc/WSLInterop", F_OK) == 0 ||
+                  access("/proc/sys/fs/binfmt_misc/WSLInterop-late", F_OK) == 0;
     if (!ps || capture(wslpath, winpath, sizeof winpath) != 0 || !winpath[0]) {
         printf("SKIP  Windows copy test (no Windows interop here)\n");
+    } else if (!interop) {
+        printf("SKIP  Windows copy test: WSL can't start Windows programs right now (its "
+               "binfmt_misc entry is missing).\n      Run 'wsl --shutdown' in Windows, then "
+               "try again.\n");
     } else {
         char script[PATH_MAX * 2 + 512];
         snprintf(script, sizeof script,
