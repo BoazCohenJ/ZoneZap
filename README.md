@@ -100,17 +100,18 @@ It waits for the close, rather than deleting on create, so the Windows copy neve
 
 - **The `SaveZoneInformation` policy / registry key:** stops Windows from recording where any download came from, on every drive, which weakens SmartScreen and Office's Protected View. It also only affects new downloads; files already marked still bring their stream with them.
 - **Adding `wsl.localhost` to Local intranet sites:** reported to work for some people and not others in #7456, and it lowers the security zone of everything served from WSL.
-- **`find ~ -name '*:Zone.Identifier' -delete` on a timer:** works, but leaves the files around until the next run and walks your whole home folder each time. `zonezap clean` does the same one-off sweep (staying on one filesystem), and the daemon removes new ones as they appear.
+- **One-off cleaners** (`find ~ -name '*:Zone.Identifier' -delete`, scripts like `unzone`, wslkit's `fix zone`): they work, but the files stay around until the next run, and a sweep walks your whole home folder each time. `zonezap clean` does the same one-off sweep (staying on one filesystem), and the daemon removes new ones as they appear.
 
 ## Tested on
 
-Windows 11 with WSL 2.7.13 and kernel 6.18.33, on Alpine 3.24 (no systemd, `wsl.conf` boot command) and Ubuntu 24.04 (systemd service):
+Windows 11 with WSL 2.7.13 and kernel 6.18.33, on Alpine 3.24 (no systemd, `wsl.conf` boot command, busybox `wget`) and Ubuntu 24.04 (systemd service, `curl`), both installed through `install.sh`:
 
 - `Copy-Item`, `cmd copy` and `robocopy` into the distro: every `:Zone.Identifier` removed about 1 ms after the copy finished, the copy reporting success, and the zone info kept as an xattr;
 - 2,000 files in 20 folders copied with `robocopy` and again with `Copy-Item`: all 4,000 files arrived intact, 0 leftovers;
 - autostart after `wsl --terminate` and after WSL shut an idle distro down;
 - the safety rules: look-alike files with other content, directories and symlinks named `*:Zone.Identifier` were all kept;
-- `clean` (and `--dry-run`) on old leftovers, as root and as a normal user on their own home.
+- `clean` (and `--dry-run`) on old leftovers, as root and as a normal user on their own home;
+- the installer refusing a binary with a wrong checksum, and `uninstall` restoring `wsl.conf` and removing the systemd unit.
 
 Not tested yet: Debian, Fedora and openSUSE distros, arm64 hardware (the arm64 build is compiled and self-tested by CI on an arm64 runner), and the Docker Desktop distro.
 
