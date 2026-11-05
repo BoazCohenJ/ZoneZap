@@ -1,0 +1,34 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  html, body { margin: 0; background: #141210; }
+  .term { width: 1080px; height: 640px; box-sizing: border-box; font: 16.5px/1.5 "Cascadia Mono", Consolas, monospace; color: #e8e2da; background: #141210; }
+  .bar { height: 38px; background: #221f1c; display: flex; align-items: center; padding: 0 16px; gap: 8px; color: #a59d93; font: 14px "Segoe UI", sans-serif; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: #3a3530; }
+  .body { padding: 16px 24px; white-space: pre; }
+  .p { color: #8fd18b; } .c { color: #ffffff; } .dim { color: #8a8278; }
+  .bad { color: #ff8a7a; } .ok { color: #8fd18b; } .acc { color: #f5a64a; }
+</style></head>
+<body><div class="term"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>&nbsp; root@ZZTest: ~/downloads</div><div class="body"><span class="dim"># report.pdf was just copied in from Windows with Copy-Item</span>
+<span class="p">#</span> <span class="c">ls</span>
+report.pdf  <span class="bad">report.pdf:Zone.Identifier</span>
+<span class="p">#</span> <span class="c">zonezap install</span>
+Added to the [boot] command in /etc/wsl.conf (starts with this distro).
+Watcher:   <span class="ok">running</span> (pid 8073)  <span class="dim">[other lines trimmed]</span>
+<span class="p">#</span> <span class="c">zonezap clean ~/downloads</span>
+removed /root/downloads/report.pdf:Zone.Identifier (zone info kept as xattr)
+<span class="p">#</span> <span class="c">ls</span>
+report.pdf
+<span class="p">#</span> <span class="c">zonezap self-test</span>
+Using the running watcher (pid 8073).
+<span class="ok">PASS</span>  linux.txt:Zone.Identifier removed in 1 ms
+<span class="ok">PASS</span>  zone info kept in user.windows.Zone.Identifier
+<span class="ok">PASS</span>  a look-alike file with other content was kept
+<span class="ok">PASS</span>  Windows copy succeeded; its :Zone.Identifier file was removed (gone 0 ms after
+      the copy finished)
+<span class="ok">PASS</span>  zone info of the Windows copy kept as an xattr
+Self-test passed.
+<span class="p">#</span> <span class="c">zonezap info report.pdf</span>
+ Zone.Identifier (kept by ZoneZap):
+  Zone:      3 (Internet)
+  Came from: <span class="acc">https://example.com/report.pdf</span></div></div></body></html>

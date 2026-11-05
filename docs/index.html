@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZoneZap: no more :Zone.Identifier files in WSL</title>
+<meta name="description" content="Free, open-source daemon for WSL 2 that removes the file:Zone.Identifier files Windows leaves next to every downloaded file you copy into Linux. About 1 ms after the copy, zone info kept as an xattr, one-line install.">
+<link rel="icon" type="image/png" href="icon-64.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="ZoneZap: no more :Zone.Identifier files in WSL">
+<meta property="og:description" content="Copy files from Windows into WSL without the file:Zone.Identifier junk next to each one. One-line install, ~100 KB, open source.">
+<meta property="og:url" content="https://boazcohenj.github.io/ZoneZap/">
+<meta property="og:image" content="https://boazcohenj.github.io/ZoneZap/social.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root {
+    --bg: #faf9f7;
+    --surface: #ffffff;
+    --text: #0d0c0b;
+    --muted: #57524c;
+    --line: #e6e1da;
+    --accent: #a14b08;
+    --accent-ink: #ffffff;
+    --code: #f1ede7;
+    --shadow: 0 1px 2px rgba(13, 12, 11, .05), 0 10px 30px rgba(13, 12, 11, .08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e0d0c;
+      --surface: #191715;
+      --text: #ffffff;
+      --muted: #c4bdb4;
+      --line: #2e2a26;
+      --accent: #f59e3b;
+      --accent-ink: #1a0f02;
+      --code: #24211e;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px rgba(0, 0, 0, .4);
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.6 "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; }
+  a { color: var(--accent); }
+  img { max-width: 100%; height: auto; }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 16px; }
+  header.top { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; gap: 12px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--text); text-decoration: none; }
+  .brand img { width: 30px; height: 30px; }
+  .top nav a { color: var(--muted); text-decoration: none; margin-left: 18px; font-size: 15px; }
+  .top nav a:hover { color: var(--text); }
+
+  .hero { padding: 32px 0 48px; }
+  .hero-text { max-width: 46em; }
+  h1 { font-size: clamp(32px, 4.6vw, 50px); line-height: 1.08; letter-spacing: -.02em; margin: 0 0 18px; }
+  .lede { font-size: 19px; color: var(--muted); margin: 0 0 28px; }
+  .install { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow); max-width: 46em; }
+  .install .label { font-size: 13px; color: var(--muted); font-weight: 600; margin: 0 0 8px; }
+  .install pre { background: var(--code); }
+  .copy { position: absolute; top: 12px; right: 14px; font: 600 13px "Segoe UI", system-ui, sans-serif; padding: 5px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 18px; }
+  .btn { display: inline-flex; align-items: center; gap: 10px; padding: 11px 20px; border-radius: 10px; font-weight: 600; text-decoration: none; font-size: 16px; border: 1px solid var(--line); color: var(--text); background: var(--surface); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); box-shadow: var(--shadow); }
+  .btn:hover { filter: brightness(1.06); }
+  .meta { margin-top: 16px; color: var(--muted); font-size: 14px; }
+  .shot { display: block; margin-top: 36px; border-radius: 12px; border: 1px solid var(--line); box-shadow: var(--shadow); overflow: hidden; background: #141210; }
+  .shot img { display: block; }
+  .caption { font-size: 14px; color: var(--muted); margin-top: 10px; text-align: center; }
+
+  section { padding: 48px 0; border-top: 1px solid var(--line); }
+  h2 { font-size: clamp(26px, 3.2vw, 34px); line-height: 1.2; letter-spacing: -.01em; margin: 0 0 12px; }
+  .intro { color: var(--muted); max-width: 44em; margin: 0 0 28px; }
+
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+  .card h3 { margin: 0 0 6px; font-size: 18px; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  .two > div { min-width: 0; }
+  ol.steps { padding-left: 22px; margin: 0; } ol.steps li { margin: 0 0 12px; }
+  code { background: var(--code); padding: 2px 6px; border-radius: 5px; font-size: .9em; overflow-wrap: anywhere; }
+  pre { background: var(--code); border-radius: 10px; padding: 14px 16px; overflow-x: auto; font-size: 14px; margin: 0; }
+  pre code { background: none; padding: 0; overflow-wrap: normal; }
+  details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; margin: 0 0 10px; }
+  summary { cursor: pointer; font-weight: 600; }
+  details p { margin: 10px 0 0; color: var(--muted); }
+  ul.limits li, .why li { margin: 0 0 10px; }
+  ul.limits li { color: var(--muted); }
+  ul.limits b { color: var(--text); }
+  .flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 0; }
+  .step { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+  .step .n { display: inline-block; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); text-align: center; font-weight: 700; font-size: 14px; line-height: 26px; margin-right: 6px; }
+  .step p { margin: 8px 0 0; color: var(--muted); font-size: 15px; }
+  footer { border-top: 1px solid var(--line); padding: 28px 0 40px; color: var(--muted); font-size: 14px; }
+
+  @media (max-width: 860px) {
+    .two, .flow { grid-template-columns: 1fr; gap: 20px; }
+    .features { grid-template-columns: 1fr; }
+    .top nav a:not(.gh) { display: none; }
+  }
+  @media (prefers-reduced-motion: no-preference) { .btn { transition: filter .15s; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#"><img src="icon-64.png" alt="">ZoneZap</a>
+    <nav>
+      <a href="#how">How it works</a>
+      <a href="#limits">Limits</a>
+      <a href="#faq">FAQ</a>
+      <a class="gh" href="https://github.com/BoazCohenJ/ZoneZap">GitHub</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <div class="hero-text">
+      <h1>No more <code>:Zone.Identifier</code> files in WSL</h1>
+      <p class="lede">Copy a downloaded file from Windows into your distro and a second file, <code>report.pdf:Zone.Identifier</code>, appears next to it, then in <code>git status</code>, Docker builds and backups. ZoneZap is a tiny open-source daemon inside the distro that removes each one about a millisecond after Windows writes it, and keeps the "where did this come from" info on the real file.</p>
+    </div>
+    <div class="install">
+      <p class="label">Run this inside your WSL distro</p>
+      <button class="copy" type="button" data-copy="curl -fsSL https://boazcohenj.github.io/ZoneZap/install.sh | sudo sh">Copy</button>
+      <pre><code>curl -fsSL https://boazcohenj.github.io/ZoneZap/install.sh | sudo sh</code></pre>
+    </div>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/BoazCohenJ/ZoneZap/releases/latest">Release and checksums</a>
+      <a class="btn" href="https://github.com/BoazCohenJ/ZoneZap">Source on GitHub</a>
+    </div>
+    <p class="meta">WSL 2, any distro, x86_64 and arm64 · one ~100 KB static binary, no dependencies · nothing changed in Windows · open source (MIT)</p>
+    <div class="shot"><img src="screenshot-selftest.png" width="1080" height="640" alt="Terminal: ls shows report.pdf and report.pdf:Zone.Identifier after a copy from Windows; zonezap install, then zonezap clean removes it; the self-test passes: a Windows copy succeeded and its :Zone.Identifier file was removed, with the zone info kept as an xattr; zonezap info shows the file came from the Internet zone"></div>
+    <p class="caption">Real output from an Alpine test distro (install output trimmed): an old leftover cleaned up, then the built-in self-test.</p>
+  </div>
+
+  <section id="how">
+    <h2>Where the files come from, and what ZoneZap does</h2>
+    <p class="intro">Windows marks downloads with a hidden NTFS stream called <code>Zone.Identifier</code>. Linux filesystems have no hidden streams, so when Explorer, a browser, <code>robocopy</code> or <code>Copy-Item</code> copies a marked file into WSL, the WSL file server writes the stream as a visible file named <code>name:Zone.Identifier</code>. It's been open as <a href="https://github.com/microsoft/WSL/issues/4609">microsoft/WSL#4609</a> since 2019.</p>
+    <div class="flow">
+      <div class="step"><span class="n">1</span><b>One watch per disk</b><p>ZoneZap puts a single fanotify mark on each local Linux filesystem, so it sees every new file without a watch per folder, and ignores anything not named <code>*:Zone.Identifier</code> or <code>*:SmartScreen</code>.</p></div>
+      <div class="step"><span class="n">2</span><b>Wait for the copy</b><p>When Windows closes the stream file, ZoneZap checks it really is a Windows zone marker: a small regular file starting with <code>[ZoneTransfer]</code>.</p></div>
+      <div class="step"><span class="n">3</span><b>Keep the info, drop the file</b><p>The content goes into the <code>user.windows.Zone.Identifier</code> xattr of the real file (see it with <code>zonezap info</code>), then the stream file is deleted. The copy reports success.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What you get</h2>
+    <div class="features">
+      <div class="card"><h3>Gone in about 1 ms</h3><p>In testing, each stream file was removed about a millisecond after the Windows copy finished: 4,000 files in a row, zero left behind.</p></div>
+      <div class="card"><h3>Windows stays as it is</h3><p>No registry tweak, no policy, and no turning off download marking for the whole PC. Only the Linux side is cleaned.</p></div>
+      <div class="card"><h3>Careful about what it deletes</h3><p>Only small regular files with the exact name pattern and Windows' own content format. Directories, symlinks and your own look-alike files are kept.</p></div>
+      <div class="card"><h3>Cleans up the past</h3><p><code>sudo zonezap clean</code> sweeps the files you already have, staying on one filesystem. <code>--dry-run</code> lists them first.</p></div>
+      <div class="card"><h3>Starts with the distro</h3><p>A systemd service when systemd is on, otherwise the <code>[boot]</code> command in <code>/etc/wsl.conf</code>, keeping whatever was there. <code>sudo zonezap uninstall</code> undoes it.</p></div>
+      <div class="card"><h3>Self-test</h3><p><code>sudo zonezap self-test</code> really copies a marked file from Windows into the distro through interop and shows it being cleaned up.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="two">
+      <div>
+        <h2>Get started</h2>
+        <ol class="steps">
+          <li>In your distro, run <code>curl -fsSL https://boazcohenj.github.io/ZoneZap/install.sh | sudo sh</code>. It downloads the binary for your CPU, checks its SHA-256 and starts it.</li>
+          <li>Remove what's already there: <code>sudo zonezap clean</code>.</li>
+          <li>Check it: <code>sudo zonezap self-test</code> and <code>zonezap status</code>.</li>
+          <li>Using several distros? Install it in each one you copy files into.</li>
+        </ol>
+        <p class="meta">Rather not pipe into <code>sh</code>? Download <code>zonezap-linux-x86_64</code> and its <code>.sha256</code> from the <a href="https://github.com/BoazCohenJ/ZoneZap/releases/latest">release</a>, check it with <code>sha256sum -c</code>, then run <code>sudo ./zonezap-linux-x86_64 install</code>.</p>
+      </div>
+      <div>
+        <h2>Commands</h2>
+        <pre><code>sudo zonezap install      # start with this distro
+sudo zonezap clean        # remove old leftovers
+zonezap status            # running? how many removed?
+zonezap info report.pdf   # where did it come from?
+sudo zonezap self-test    # real Windows copy test
+sudo zonezap uninstall</code></pre>
+        <p class="meta">Add other Windows streams with <code>--stream NAME</code>, and skip the xattr with <code>--no-xattr</code>. Logs: <code>journalctl -u zonezap</code> or <code>/var/log/zonezap.log</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="limits">
+    <h2>Limits, honestly</h2>
+    <ul class="limits">
+      <li><b>It removes the files; it can't stop Windows from creating them.</b> Each one exists for about a millisecond. A program that lists the folder in exactly that moment could still see it.</li>
+      <li><b>One install per distro.</b> Every distro has its own disk, and ZoneZap runs inside it.</li>
+      <li><b>Needs root and WSL 2</b> with Linux 5.9 or newer (any current WSL kernel). WSL 1 has no fanotify.</li>
+      <li><b>Not covered:</b> the Docker Desktop distro and files copied straight into containers.</li>
+      <li><b>The xattr stays in Linux.</b> Copying the file back to Windows doesn't restore the "downloaded from the internet" mark, the same as without ZoneZap.</li>
+    </ul>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <details><summary>Why not set SaveZoneInformation or add wsl.localhost to the intranet zone?</summary><p>Both change Windows security for everything, not just WSL: the first stops marking any download, which SmartScreen and Office's Protected View rely on; the second lowers the zone of everything served from WSL. They also only help with files downloaded afterwards, and people in <a href="https://github.com/microsoft/WSL/issues/7456">#7456</a> report they don't always work.</p></details>
+    <details><summary>Why not a find -delete cron job?</summary><p>That works, but the files sit there until the next run and every run walks your whole home folder. ZoneZap removes new ones as they appear without scanning, and <code>zonezap clean</code> is the one-off sweep.</p></details>
+    <details><summary>Is it safe to run as root?</summary><p>Filesystem-wide fanotify needs root. ZoneZap opens the folder by handle, never follows symlinks, only unlinks the matching entry in that folder, and only if it passes all the checks. It's about 1,700 lines of C you can read, with unit tests, built by GitHub Actions.</p></details>
+    <details><summary>Does it slow anything down?</summary><p>Idle, it uses no CPU and under 200 KB of memory. During an 8.5-second <code>robocopy</code> of 2,000 marked files it used 0.27 s of CPU in total.</p></details>
+    <details><summary>What has it been tested on?</summary><p>Windows 11, WSL 2.7.13, kernel 6.18, Alpine 3.24 (no systemd) and Ubuntu 24.04 (systemd): <code>Copy-Item</code>, <code>cmd copy</code> and <code>robocopy</code>, 2,000-file copies, autostart after a restart, the safety rules, and <code>clean</code>. Not yet: Debian, Fedora, real arm64 hardware (CI builds and self-tests arm64), the Docker Desktop distro.</p></details>
+  </section>
+
+  <section>
+    <h2>Why this exists</h2>
+    <p class="intro">The issue has been open for years and the answers are registry tweaks, security trade-offs or "just delete them".</p>
+    <ul class="why">
+      <li><a href="https://github.com/microsoft/WSL/issues/7456">microsoft/WSL#7456: Zone.Identifier files when downloading from Windows to WSL file structure</a>: open since 2021, 410+ reactions, 170 comments, still reported in 2026</li>
+      <li><a href="https://github.com/microsoft/WSL/issues/4609">microsoft/WSL#4609: Zone.Identifier files when copying from Windows to WSL filestructure</a>: open since 2019, 160 reactions</li>
+      <li><a href="https://superuser.com/questions/1692240/auto-generated-zone-identity-files-can-should-i-delete">Super User: Auto-generated zone-identity files, can/should I delete?</a> (47,000 views)</li>
+    </ul>
+  </section>
+</div>
+<footer>
+  <div class="wrap">ZoneZap is free and open source under the MIT license. Not affiliated with Microsoft · <a href="https://github.com/BoazCohenJ/ZoneZap">Source on GitHub</a> · <a href="https://github.com/BoazCohenJ/ZoneZap/issues">Report a problem</a></div>
+</footer>
+<script>
+  document.querySelectorAll('.copy').forEach(function (b) {
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(b.dataset.copy).then(function () {
+        b.textContent = 'Copied';
+        setTimeout(function () { b.textContent = 'Copy'; }, 1500);
+      });
+    });
+  });
+</script>
+</body>
+</html>
