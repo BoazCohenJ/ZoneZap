@@ -13,7 +13,7 @@ $(OUT)/zonezap: src/main.c src/logic.c src/logic.h
 
 $(OUT)/test_logic: tests/test_logic.c src/logic.c src/logic.h
 	@mkdir -p $(OUT)
-	$(CC) $(CFLAGS) -fsanitize=undefined -o $@ tests/test_logic.c src/logic.c
+	$(CC) $(CFLAGS) -fsanitize=undefined -fsanitize-trap=undefined -o $@ tests/test_logic.c src/logic.c
 
 test: $(OUT)/test_logic
 	$(OUT)/test_logic
