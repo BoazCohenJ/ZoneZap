@@ -1,0 +1,76 @@
+name: Bug report
+description: "Zone.Identifier files are left behind, or ZoneZap misbehaves"
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time. Even a short report helps, and nothing here is too small.
+  - type: textarea
+    id: what
+    attributes:
+      label: "What happened?"
+      description: "What did you do, what did you expect, and what happened instead?"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: "Steps to reproduce"
+      placeholder: |
+        1. Download a file in Edge
+        2. Copy it into ~/project with Explorer
+        3. report.pdf:Zone.Identifier is still there
+  - type: input
+    id: version
+    attributes:
+      label: "ZoneZap version"
+      description: "The release you downloaded"
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: input
+    id: distro
+    attributes:
+      label: "Distro and version"
+      description: "From `cat /etc/os-release`"
+      placeholder: "Ubuntu 24.04"
+    validations:
+      required: true
+  - type: dropdown
+    id: init
+    attributes:
+      label: "How it starts"
+      options:
+        - "systemd service (zonezap.service)"
+        - "wsl.conf [boot] command"
+        - "Run by hand (zonezap run)"
+        - "Not sure"
+  - type: textarea
+    id: wsl-version-output
+    attributes:
+      label: "`wsl --version` output"
+      description: "Run in PowerShell or cmd on Windows"
+      render: text
+  - type: input
+    id: copy
+    attributes:
+      label: "How the file got there"
+      description: "Explorer paste or drag, a browser saving to \\\\wsl.localhost, robocopy, Copy-Item, VS Code..."
+      placeholder: "Explorer drag and drop"
+  - type: textarea
+    id: zonezap-log
+    attributes:
+      label: "ZoneZap log"
+      description: "`journalctl -u zonezap` with systemd, otherwise `/var/log/zonezap.log`. Run with `--verbose` for more detail."
+      render: text
+  - type: textarea
+    id: self-test-output
+    attributes:
+      label: "Self-test output"
+      description: "Output of `sudo zonezap self-test`"
+      render: text
+  - type: textarea
+    id: extra
+    attributes:
+      label: "Anything else"
+      description: "Other filesystems involved (a second disk, Docker volumes, a mounted VHD)?"
